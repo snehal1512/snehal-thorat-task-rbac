@@ -1,0 +1,45 @@
+<div class="max-w-2xl mx-auto p-6">
+  <h1 class="text-2xl font-bold mb-6">Task Dashboard</h1>
+
+  <!-- Create Task -->
+  <div class="flex gap-2 mb-6">
+    <input
+      class="border p-2 flex-1 rounded"
+      placeholder="New task"
+      [(ngModel)]="title"
+    />
+
+    <button
+      class="bg-blue-600 text-white px-4 rounded hover:bg-blue-700"
+      (click)="createTask()"
+    >
+      Add
+    </button>
+  </div>
+
+  <!-- Task List -->
+  <ul class="space-y-2">
+    <li
+      *ngFor="let task of tasks"
+      class="flex justify-between items-center border p-3 rounded"
+    >
+      <span
+        class="cursor-pointer"
+        (click)="toggleStatus(task)"
+        [class.line-through]="task.status === 'DONE'"
+      >
+        {{ task.title }}
+      </span>
+
+      <span
+        class="text-xs px-2 py-1 rounded"
+        [class.bg-green-200]="task.status === 'DONE'"
+        [class.text-green-800]="task.status === 'DONE'"
+        [class.bg-yellow-200]="task.status === 'TODO'"
+        [class.text-yellow-800]="task.status === 'TODO'"
+      >
+        {{ task.status }}
+      </span>
+    </li>
+  </ul>
+</div>
