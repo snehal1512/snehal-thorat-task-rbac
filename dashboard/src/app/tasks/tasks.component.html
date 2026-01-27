@@ -1,45 +1,152 @@
-<div class="max-w-2xl mx-auto p-6">
-  <h1 class="text-2xl font-bold mb-6">Task Dashboard</h1>
+<div class="max-w-7xl mx-auto p-4">
 
-  <!-- Create Task -->
-  <div class="flex gap-2 mb-6">
-    <input
-      class="border p-2 flex-1 rounded"
-      placeholder="New task"
-      [(ngModel)]="title"
-    />
+  <!-- Top Bar -->
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold">Task Board</h1>
 
     <button
-      class="bg-blue-600 text-white px-4 rounded hover:bg-blue-700"
-      (click)="createTask()"
+      class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+      (click)="logout()"
     >
-      Add
+      Logout
     </button>
   </div>
 
-  <!-- Task List -->
-  <ul class="space-y-2">
-    <li
-      *ngFor="let task of tasks"
-      class="flex justify-between items-center border p-3 rounded"
-    >
-      <span
-        class="cursor-pointer"
-        (click)="toggleStatus(task)"
-        [class.line-through]="task.status === 'DONE'"
-      >
-        {{ task.title }}
-      </span>
+  <!-- Create Task -->
+  <div class="flex flex-col sm:flex-row gap-3 mb-6">
+    <input
+      class="border p-3 flex-1 rounded"
+      placeholder="Task title"
+      [(ngModel)]="title"
+    />
 
-      <span
-        class="text-xs px-2 py-1 rounded"
-        [class.bg-green-200]="task.status === 'DONE'"
-        [class.text-green-800]="task.status === 'DONE'"
-        [class.bg-yellow-200]="task.status === 'TODO'"
-        [class.text-yellow-800]="task.status === 'TODO'"
+    <select class="border p-3 rounded" [(ngModel)]="category">
+      <option value="Work">Work</option>
+      <option value="Personal">Personal</option>
+    </select>
+
+    <button
+      class="bg-blue-600 text-white px-6 rounded hover:bg-blue-700"
+      (click)="submitTask()"
+    >
+      {{ editingTaskId ? 'Save' : 'Add' }}
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="flex flex-wrap gap-3 mb-6">
+    <select class="border p-3 rounded" [(ngModel)]="filter">
+      <option value="All">All Categories</option>
+      <option value="Work">Work</option>
+      <option value="Personal">Personal</option>
+    </select>
+
+    <select class="border p-3 rounded" [(ngModel)]="statusFilter">
+      <option value="All">All Statuses</option>
+      <option value="TODO">Todo</option>
+      <option value="IN_PROGRESS">In Progress</option>
+      <option value="COMPLETED">Completed</option>
+    </select>
+  </div>
+
+  <!-- Kanban Board -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+    <!-- TODO -->
+    <div class="bg-gray-100 rounded p-4">
+      <h2 class="font-semibold mb-3">Todo</h2>
+
+      <div
+        cdkDropList
+        id="todoList"
+        [cdkDropListData]="getTasksByStatus('TODO')"
+        [cdkDropListConnectedTo]="['inProgressList', 'completedList']"
+        (cdkDropListDropped)="dropToStatus($event, 'TODO')"
+        class="space-y-3 min-h-[200px]"
       >
-        {{ task.status }}
-      </span>
-    </li>
-  </ul>
+        <div
+          *ngFor="let task of getTasksByStatus('TODO')"
+          cdkDrag
+          [cdkDragData]="task"
+          class="bg-white p-3 rounded shadow cursor-move"
+        >
+          <p class="font-medium">{{ task.title }}</p>
+          <span
+            class="text-xs px-2 py-1 rounded mt-2 inline-block"
+            [ngClass]="{
+              'bg-blue-100 text-blue-700': task.category === 'Work',
+              'bg-purple-100 text-purple-700': task.category === 'Personal'
+            }"
+          >
+            {{ task.category }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- IN PROGRESS -->
+    <div class="bg-yellow-50 rounded p-4">
+      <h2 class="font-semibold mb-3">In Progress</h2>
+
+      <div
+        cdkDropList
+        id="inProgressList"
+        [cdkDropListData]="getTasksByStatus('IN_PROGRESS')"
+        [cdkDropListConnectedTo]="['todoList', 'completedList']"
+        (cdkDropListDropped)="dropToStatus($event, 'IN_PROGRESS')"
+        class="space-y-3 min-h-[200px]"
+      >
+        <div
+          *ngFor="let task of getTasksByStatus('IN_PROGRESS')"
+          cdkDrag
+          [cdkDragData]="task"
+          class="bg-white p-3 rounded shadow cursor-move"
+        >
+          <p class="font-medium">{{ task.title }}</p>
+          <span
+            class="text-xs px-2 py-1 rounded mt-2 inline-block"
+            [ngClass]="{
+              'bg-blue-100 text-blue-700': task.category === 'Work',
+              'bg-purple-100 text-purple-700': task.category === 'Personal'
+            }"
+          >
+            {{ task.category }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPLETED -->
+    <div class="bg-green-50 rounded p-4">
+      <h2 class="font-semibold mb-3">Completed</h2>
+
+      <div
+        cdkDropList
+        id="completedList"
+        [cdkDropListData]="getTasksByStatus('COMPLETED')"
+        [cdkDropListConnectedTo]="['todoList', 'inProgressList']"
+        (cdkDropListDropped)="dropToStatus($event, 'COMPLETED')"
+        class="space-y-3 min-h-[200px]"
+      >
+        <div
+          *ngFor="let task of getTasksByStatus('COMPLETED')"
+          cdkDrag
+          [cdkDragData]="task"
+          class="bg-white p-3 rounded shadow cursor-move opacity-70"
+        >
+          <p class="font-medium line-through">{{ task.title }}</p>
+          <span
+            class="text-xs px-2 py-1 rounded mt-2 inline-block"
+            [ngClass]="{
+              'bg-blue-100 text-blue-700': task.category === 'Work',
+              'bg-purple-100 text-purple-700': task.category === 'Personal'
+            }"
+          >
+            {{ task.category }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+  </div>
 </div>

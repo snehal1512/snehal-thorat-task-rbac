@@ -58,7 +58,7 @@ export class TasksController {
     @Body()
     updates: {
       title?: string;
-      status?: 'TODO' | 'DONE';
+      status?: 'TODO' | 'IN_PROGRESS' | 'COMPLETED';
       category?: 'Work' | 'Personal';
     },
   ) {

@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
-export type TaskStatus = 'TODO' | 'DONE';
+export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'COMPLETED';
 export type TaskCategory = 'Work' | 'Personal';
 
 @Entity()
