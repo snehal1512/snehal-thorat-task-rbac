@@ -1,7 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Task, TaskCategory } from './task.entity';
+
+import { Task } from './task.entity';
+import { Organization } from '../organizations/organization.entity';
+import { User } from '../users/user.entity';
 
 @Injectable()
 export class TasksService {
@@ -10,45 +13,80 @@ export class TasksService {
     private readonly taskRepo: Repository<Task>,
   ) {}
 
-  // All tasks in organization
-  findAll(organizationId: number) {
-    return this.taskRepo.find({
-      where: { organizationId },
-    });
-  }
-
-  // Tasks created by logged-in user
-  findMine(organizationId: number, userId: number) {
+  // ------------------------
+  // READ
+  // ------------------------
+  findAll(orgId: number) {
     return this.taskRepo.find({
       where: {
-        organizationId,
-        createdBy: userId,
+        organization: { id: orgId },
       },
+      order: { id: 'DESC' },
     });
   }
 
+  findMine(orgId: number, userId: number) {
+    return this.taskRepo.find({
+      where: {
+        organization: { id: orgId },
+        createdBy: { id: userId },
+      },
+      order: { id: 'DESC' },
+    });
+  }
+
+  // ------------------------
+  // CREATE
+  // ------------------------
   create(
     title: string,
-    category: TaskCategory | undefined,
+    category: 'Work' | 'Personal' = 'Work',
     organizationId: number,
     userId: number,
   ) {
-    const task: Partial<Task> = {
+    const task = this.taskRepo.create({
       title,
-      category: category ?? 'Work',
+      category,
       status: 'TODO',
-      organizationId,
-      createdBy: userId,
-    };
+      organization: { id: organizationId } as Organization,
+      createdBy: { id: userId } as User,
+    });
 
     return this.taskRepo.save(task);
   }
 
-  update(id: number, updates: Partial<Task>) {
-    return this.taskRepo.update(id, updates);
+  // ------------------------
+  // UPDATE
+  // ------------------------
+  async update(
+    id: number,
+    updates: {
+      title?: string;
+      status?: 'TODO' | 'IN_PROGRESS' | 'COMPLETED';
+      category?: 'Work' | 'Personal';
+    },
+  ) {
+    const task = await this.taskRepo.findOne({ where: { id } });
+
+    if (!task) {
+      throw new NotFoundException('Task not found');
+    }
+
+    Object.assign(task, updates);
+    return this.taskRepo.save(task);
   }
 
-  delete(id: number) {
-    return this.taskRepo.delete(id);
+  // ------------------------
+  // DELETE
+  // ------------------------
+  async delete(id: number) {
+    const task = await this.taskRepo.findOne({ where: { id } });
+
+    if (!task) {
+      throw new NotFoundException('Task not found');
+    }
+
+    await this.taskRepo.remove(task);
+    return { success: true };
   }
 }

@@ -6,6 +6,7 @@ import {
   CdkDragDrop,
 } from '@angular/cdk/drag-drop';
 import { TasksService } from '../services/tasks.service';
+import { AuthService } from '../services/auth.service';
 
 type Status = 'TODO' | 'IN_PROGRESS' | 'COMPLETED';
 type Category = 'Work' | 'Personal';
@@ -15,7 +16,6 @@ interface Task {
   title: string;
   status: Status;
   category: Category;
-  createdBy: number;
 }
 
 @Component({
@@ -25,139 +25,96 @@ interface Task {
   templateUrl: './tasks.component.html',
 })
 export class TasksComponent implements OnInit {
+
+  isLoading = true;
+
   tasks: Task[] = [];
 
-  // Create / Edit
   title = '';
   category: Category = 'Work';
-  editingTaskId: number | null = null;
-
-  // Filters
   filter: 'All' | Category = 'All';
   statusFilter: 'All' | Status = 'All';
 
-  constructor(private tasksService: TasksService) {}
+  userRole: 'OWNER' | 'ADMIN' | 'VIEWER' = 'VIEWER';
+
+  constructor(
+    private tasksService: TasksService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit(): void {
+    this.userRole = this.authService.getRole();
     this.loadTasks();
   }
 
-  loadTasks(): void {
-    this.tasksService.getTasks().subscribe(tasks => {
-      this.tasks = tasks;
-    });
+  get isViewer(): boolean {
+    return this.userRole === 'VIEWER';
   }
 
-  // --------------------
-  // CREATE / UPDATE
-  // --------------------
+  loadTasks(): void {
+  this.isLoading = true;
+
+  this.tasksService.getTasks().subscribe({
+    next: (tasks) => {
+      this.tasks = tasks;
+      this.isLoading = false;
+    },
+    error: () => {
+      this.isLoading = false;
+    },
+  });
+}
+
+
   submitTask(): void {
-    if (!this.title.trim()) return;
-
-    if (this.editingTaskId) {
-      const task = this.tasks.find(t => t.id === this.editingTaskId);
-      if (task) {
-        task.title = this.title;
-        task.category = this.category;
-      }
-
-      this.tasksService.updateTask(this.editingTaskId, {
-        title: this.title,
-        category: this.category,
-      }).subscribe({
-        error: () => this.loadTasks(),
-      });
-
-      this.resetForm();
-      return;
-    }
-
-    const tempTask: Task = {
-      id: Date.now(),
-      title: this.title,
-      category: this.category,
-      status: 'TODO',
-      createdBy: 0,
-    };
-
-    this.tasks.unshift(tempTask);
+    if (this.isViewer || !this.title.trim()) return;
 
     this.tasksService.createTask({
       title: this.title,
       category: this.category,
     }).subscribe({
-      next: () => this.loadTasks(),
-      error: () => this.loadTasks(),
+      next: () => {
+        this.title = '';
+        this.loadTasks();
+      },
+      error: (err) => {
+        if (err.status === 403) {
+          alert('You are not allowed to create tasks.');
+        }
+      },
     });
-
-    this.resetForm();
-  }
-
-  editTask(task: Task): void {
-    this.editingTaskId = task.id;
-    this.title = task.title;
-    this.category = task.category;
   }
 
   deleteTask(taskId: number): void {
-    this.tasks = this.tasks.filter(t => t.id !== taskId);
+    if (this.isViewer) return;
 
-    this.tasksService.deleteTask(taskId).subscribe({
-      error: () => this.loadTasks(),
+    this.tasksService.deleteTask(taskId).subscribe(() => {
+      this.tasks = this.tasks.filter(t => t.id !== taskId);
     });
   }
 
-  resetForm(): void {
-    this.title = '';
-    this.category = 'Work';
-    this.editingTaskId = null;
-  }
+  dropToStatus(event: CdkDragDrop<Task[]>, status: Status): void {
+    if (this.isViewer) return;
 
-  // --------------------
-  // FILTER HELPERS
-  // --------------------
-  filteredTasks(): Task[] {
-    let list = [...this.tasks];
+    const task = event.item.data as Task;
 
-    if (this.filter !== 'All') {
-      list = list.filter(t => t.category === this.filter);
-    }
+    if (task.status === status) return;
 
-    if (this.statusFilter !== 'All') {
-      list = list.filter(t => t.status === this.statusFilter);
-    }
-
-    return list;
+    this.tasksService.updateTask(task.id, { status }).subscribe(() => {
+      this.loadTasks();
+    });
   }
 
   getTasksByStatus(status: Status): Task[] {
-    return this.filteredTasks().filter(t => t.status === status);
-  }
-
-  // --------------------
-  // DRAG BETWEEN COLUMNS
-  // --------------------
-  dropToStatus(
-    event: CdkDragDrop<Task[]>,
-    newStatus: Status
-  ): void {
-    const task = event.item.data as Task;
-
-    if (!task || task.status === newStatus) return;
-
-    // Optimistic update
-    task.status = newStatus;
-
-    this.tasksService.updateTask(task.id, { status: newStatus }).subscribe({
-      error: () => this.loadTasks(),
+    return this.tasks.filter(task => {
+      if (task.status !== status) return false;
+      if (this.filter !== 'All' && task.category !== this.filter) return false;
+      if (this.statusFilter !== 'All' && task.status !== this.statusFilter) return false;
+      return true;
     });
   }
 
-  // --------------------
-  // LOGOUT
-  // --------------------
   logout(): void {
-    localStorage.removeItem('token');
-    window.location.href = '/login';
+    this.authService.logout();
   }
 }

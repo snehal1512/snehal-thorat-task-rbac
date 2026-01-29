@@ -1,4 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { Organization } from '../organizations/organization.entity';
+import { User } from '../users/user.entity';
 
 export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'COMPLETED';
 export type TaskCategory = 'Work' | 'Personal';
@@ -14,13 +16,12 @@ export class Task {
   @Column({ default: 'TODO' })
   status: TaskStatus;
 
-  @Column({ default: 'Work' })
+  @Column()
   category: TaskCategory;
 
-  @Column()
-  organizationId: number;
+  @ManyToOne(() => Organization, org => org.tasks, { eager: true })
+  organization: Organization;
 
-  // ✅ NEW: user who created the task
-  @Column()
-  createdBy: number;
+  @ManyToOne(() => User, user => user.tasks, { eager: true })
+  createdBy: User;
 }

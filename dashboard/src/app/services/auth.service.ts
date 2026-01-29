@@ -25,4 +25,13 @@ export class AuthService {
   logout() {
     localStorage.removeItem('token');
   }
+
+  getRole(): 'OWNER' | 'ADMIN' | 'VIEWER' {
+    const token = localStorage.getItem('token');
+    if (!token) return 'VIEWER';
+
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.role;
+  }
+
 }
