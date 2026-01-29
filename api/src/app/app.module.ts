@@ -18,7 +18,7 @@ import { SeedModule } from '../seed/seed.module';
       entities: [
         Task,
         User,
-        Organization, // 🔥 MUST BE HERE
+        Organization,
       ],
       synchronize: true,
     }),

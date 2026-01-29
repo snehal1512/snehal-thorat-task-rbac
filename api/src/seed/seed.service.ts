@@ -18,15 +18,13 @@ export class SeedService implements OnModuleInit {
 
   async onModuleInit() {
     const orgCount = await this.orgRepo.count();
-    if (orgCount > 0) return; // already seeded
+    if (orgCount > 0) return;
 
-    // 1️⃣ Create organization
     const org = this.orgRepo.create({
       name: 'Default Organization',
     });
     await this.orgRepo.save(org);
 
-    // 2️⃣ Create owner user
     const user = this.userRepo.create({
       email: 'owner@test.com',
       password: await bcrypt.hash('password', 10),
@@ -36,6 +34,6 @@ export class SeedService implements OnModuleInit {
 
     await this.userRepo.save(user);
 
-    console.log('✅ Database seeded with default org & owner user');
+    console.log('Database seeded with default org & owner user');
   }
 }

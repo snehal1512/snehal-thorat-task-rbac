@@ -24,9 +24,7 @@ export class TasksController {
     private readonly auditService: AuditService,
   ) {}
 
-  // ------------------------
-  // GET all tasks (org scoped)
-  // ------------------------
+
   @Get()
   findAll(@Req() req: any) {
     this.auditService.log('VIEW ALL TASKS', req.user);
@@ -34,9 +32,6 @@ export class TasksController {
     return this.tasksService.findAll(req.user.organizationId);
   }
 
-  // ------------------------
-  // GET tasks created by user
-  // ------------------------
   @Get('mine')
   findMine(@Req() req: any) {
     this.auditService.log('VIEW OWN TASKS', req.user);
@@ -47,10 +42,6 @@ export class TasksController {
     );
   }
 
-  // ------------------------
-  // CREATE task
-  // OWNER / ADMIN only
-  // ------------------------
   @Post()
   @Roles(Role.OWNER, Role.ADMIN)
   create(
@@ -74,10 +65,6 @@ export class TasksController {
     );
   }
 
-  // ------------------------
-  // UPDATE task
-  // OWNER / ADMIN only
-  // ------------------------
   @Patch(':id')
   @Roles(Role.OWNER, Role.ADMIN)
   update(
@@ -98,10 +85,6 @@ export class TasksController {
     return this.tasksService.update(Number(id), updates);
   }
 
-  // ------------------------
-  // DELETE task
-  // OWNER / ADMIN only
-  // ------------------------
   @Delete(':id')
   @Roles(Role.OWNER, Role.ADMIN)
   delete(@Param('id') id: string, @Req() req: any) {

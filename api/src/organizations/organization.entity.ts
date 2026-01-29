@@ -10,7 +10,6 @@ export class Organization {
   @Column()
   name: string;
 
-  // 2-level hierarchy
   @ManyToOne(() => Organization, org => org.children, { nullable: true })
   parent?: Organization;
 

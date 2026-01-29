@@ -3,6 +3,6 @@ import { AuditService } from './audit.service';
 
 @Module({
   providers: [AuditService],
-  exports: [AuditService], // 👈 IMPORTANT
+  exports: [AuditService],
 })
 export class AuditModule {}

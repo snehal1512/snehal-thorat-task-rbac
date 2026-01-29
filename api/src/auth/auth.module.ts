@@ -11,7 +11,7 @@ import { Organization } from '../organizations/organization.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Organization]), // 🔥 REQUIRED
+    TypeOrmModule.forFeature([User, Organization]),
     JwtModule.register({
       secret: 'super-secret-key',
       signOptions: { expiresIn: '1h' },

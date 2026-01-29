@@ -38,7 +38,6 @@ export class TasksService {
     return this.http.delete(`${this.apiUrl}/${id}`);
   }
 
-  // (Optional) My tasks only
   getMyTasks(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/mine`);
   }

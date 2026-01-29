@@ -9,7 +9,7 @@ import { AuditModule } from '../audit/audit.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Task]),
-    AuditModule, // 🔥 THIS IS THE FIX
+    AuditModule,
   ],
   controllers: [TasksController],
   providers: [TasksService],

@@ -7,14 +7,14 @@ export class AuthService {
     {
       id: 1,
       email: 'owner@test.com',
-      password: 'password', // plain-text (TEMP)
+      password: 'password', 
       role: 'OWNER',
       organizationId: 1,
     },
     {
       id: 2,
       email: 'viewer@test.com',
-      password: 'password', // plain-text (TEMP)
+      password: 'password',
       role: 'VIEWER',
       organizationId: 1,
     },

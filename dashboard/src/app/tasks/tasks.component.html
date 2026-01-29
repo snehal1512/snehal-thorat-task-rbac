@@ -1,18 +1,27 @@
 <div class="max-w-7xl mx-auto p-4">
 
-  <!-- Top Bar -->
   <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold">Task Board</h1>
 
-    <button
-      class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-      (click)="logout()"
-    >
-      Logout
-    </button>
+    <div class="flex gap-3">
+      <button
+        type="button"
+        class="border px-4 py-2 rounded"
+        (click)="refresh()"
+      >
+        Refresh
+      </button>
+
+
+      <button
+        class="bg-red-500 text-white px-4 py-2 rounded"
+        (click)="logout()"
+      >
+        Logout
+      </button>
+    </div>
   </div>
 
-  <!-- Create Task -->
   <div class="flex flex-col sm:flex-row gap-3 mb-6">
     <input
       class="border p-3 flex-1 rounded"
@@ -31,16 +40,14 @@
     </select>
 
     <button
-      class="bg-blue-600 text-white px-6 rounded hover:bg-blue-700"
-      (click)="submitTask()"
+      class="bg-blue-600 text-white px-6 rounded"
       [disabled]="isViewer"
-      [class.opacity-50]="isViewer"
+      (click)="submitTask()"
     >
       Add
     </button>
   </div>
 
-  <!-- Filters -->
   <div class="flex gap-3 mb-6">
     <select class="border p-3 rounded" [(ngModel)]="filter">
       <option value="All">All Categories</option>
@@ -56,115 +63,47 @@
     </select>
   </div>
 
-  <!-- Kanban Board -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+  <div *ngIf="isLoading" class="text-center py-20 text-gray-500">
+    Loading tasks...
+  </div>
 
-    <!-- TODO -->
-    <div class="bg-gray-100 rounded p-4">
-      <h2 class="font-semibold mb-3">Todo</h2>
+  <div *ngIf="!isLoading" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+    <div *ngFor="let col of columns" [class]="col.bg + ' rounded p-4'">
+      <h2 class="font-semibold mb-3">{{ col.title }}</h2>
 
       <div
         cdkDropList
-        id="todoList"
+        [id]="col.id"
+        [cdkDropListData]="tasksByStatus(col.id)"
+        [cdkDropListConnectedTo]="connectedDropLists"
         [cdkDropListDisabled]="isViewer"
-        [cdkDropListData]="getTasksByStatus('TODO')"
-        [cdkDropListConnectedTo]="['inProgressList', 'completedList']"
-        (cdkDropListDropped)="dropToStatus($event, 'TODO')"
+        (cdkDropListDropped)="dropToStatus($event, col.id)"
         class="space-y-3 min-h-[200px]"
       >
         <div
-          *ngFor="let task of getTasksByStatus('TODO')"
+          *ngFor="let task of tasksByStatus(col.id)"
           cdkDrag
           [cdkDragDisabled]="isViewer"
           [cdkDragData]="task"
-          class="bg-white p-3 rounded shadow flex justify-between items-center"
+          class="bg-white p-3 rounded shadow flex justify-between items-start cursor-move"
         >
           <div>
             <p class="font-medium">{{ task.title }}</p>
-            <span class="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700">
+            <span
+              class="text-xs px-2 py-1 rounded inline-block mt-2"
+              [ngClass]="{
+                'bg-blue-100 text-blue-700': task.category === 'Work',
+                'bg-purple-100 text-purple-700': task.category === 'Personal'
+              }"
+            >
               {{ task.category }}
             </span>
           </div>
 
           <button
             *ngIf="!isViewer"
-            class="text-red-600 text-sm hover:underline"
-            (click)="deleteTask(task.id)"
-          >
-            ✕
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- IN PROGRESS -->
-    <div class="bg-yellow-50 rounded p-4">
-      <h2 class="font-semibold mb-3">In Progress</h2>
-
-      <div
-        cdkDropList
-        id="inProgressList"
-        [cdkDropListDisabled]="isViewer"
-        [cdkDropListData]="getTasksByStatus('IN_PROGRESS')"
-        [cdkDropListConnectedTo]="['todoList', 'completedList']"
-        (cdkDropListDropped)="dropToStatus($event, 'IN_PROGRESS')"
-        class="space-y-3 min-h-[200px]"
-      >
-        <div
-          *ngFor="let task of getTasksByStatus('IN_PROGRESS')"
-          cdkDrag
-          [cdkDragDisabled]="isViewer"
-          [cdkDragData]="task"
-          class="bg-white p-3 rounded shadow flex justify-between items-center"
-        >
-          <div>
-            <p class="font-medium">{{ task.title }}</p>
-            <span class="text-xs px-2 py-1 rounded bg-purple-100 text-purple-700">
-              {{ task.category }}
-            </span>
-          </div>
-
-          <button
-            *ngIf="!isViewer"
-            class="text-red-600 text-sm hover:underline"
-            (click)="deleteTask(task.id)"
-          >
-            ✕
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- COMPLETED -->
-    <div class="bg-green-50 rounded p-4">
-      <h2 class="font-semibold mb-3">Completed</h2>
-
-      <div
-        cdkDropList
-        id="completedList"
-        [cdkDropListDisabled]="isViewer"
-        [cdkDropListData]="getTasksByStatus('COMPLETED')"
-        [cdkDropListConnectedTo]="['todoList', 'inProgressList']"
-        (cdkDropListDropped)="dropToStatus($event, 'COMPLETED')"
-        class="space-y-3 min-h-[200px]"
-      >
-        <div
-          *ngFor="let task of getTasksByStatus('COMPLETED')"
-          cdkDrag
-          [cdkDragDisabled]="isViewer"
-          [cdkDragData]="task"
-          class="bg-white p-3 rounded shadow flex justify-between items-center opacity-70"
-        >
-          <div>
-            <p class="font-medium line-through">{{ task.title }}</p>
-            <span class="text-xs px-2 py-1 rounded bg-green-100 text-green-700">
-              {{ task.category }}
-            </span>
-          </div>
-
-          <button
-            *ngIf="!isViewer"
-            class="text-red-600 text-sm hover:underline"
+            class="text-red-500 text-lg"
             (click)="deleteTask(task.id)"
           >
             ✕

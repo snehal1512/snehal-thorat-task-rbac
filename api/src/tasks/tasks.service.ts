@@ -13,9 +13,6 @@ export class TasksService {
     private readonly taskRepo: Repository<Task>,
   ) {}
 
-  // ------------------------
-  // READ
-  // ------------------------
   findAll(orgId: number) {
     return this.taskRepo.find({
       where: {
@@ -35,9 +32,6 @@ export class TasksService {
     });
   }
 
-  // ------------------------
-  // CREATE
-  // ------------------------
   create(
     title: string,
     category: 'Work' | 'Personal' = 'Work',
@@ -55,9 +49,6 @@ export class TasksService {
     return this.taskRepo.save(task);
   }
 
-  // ------------------------
-  // UPDATE
-  // ------------------------
   async update(
     id: number,
     updates: {
@@ -76,9 +67,6 @@ export class TasksService {
     return this.taskRepo.save(task);
   }
 
-  // ------------------------
-  // DELETE
-  // ------------------------
   async delete(id: number) {
     const task = await this.taskRepo.findOne({ where: { id } });
 
